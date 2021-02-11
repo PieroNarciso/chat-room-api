@@ -1,14 +1,23 @@
 import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
-import connectSequelize from 'connect-session-sequelize';
 import { createServer } from 'http';
 import { Server }  from 'socket.io';
+import 'reflect-metadata';
+import connectRedis from 'connect-redis';
+import redis from 'redis';
 
-import db from './db';
+import connectDB from './db';
 import config from './config';
 
+
 const app = express();
+
+// Sync DATABASE
+connectDB
+  .then(_ =>  console.log('DB Connected'))
+  .catch(err => console.error(err));
+
 
 const server = createServer(app);
 
@@ -31,11 +40,6 @@ export const io = new Server(server, {
 import sockets from './sockets/index';
 sockets();
 
-db.authenticate()
-  .then(() => console.log('DB Connected'))
-  .catch(err => console.log(err));
-db.sync({ force: true });
-/* db.sync(); */
 
 // Middlewares
 app.use(cors({
@@ -44,14 +48,15 @@ app.use(cors({
   exposedHeaders: ['Set-Cookie'],
 }));
 app.use(express.json());
-app.use(express.urlencoded());
+app.use(express.urlencoded({ extended: true }));
 
 // Config Session
-const SequelizeStore = connectSequelize(session.Store);
+const RedisStore = connectRedis(session);
+const redisClient = redis.createClient(config.REDIS_URL);
 app.use(
   session({
     name: config.SESSION_NAME,
-    store: new SequelizeStore({ db: db }),
+    store: new RedisStore({ client: redisClient }),
     secret: config.SECRET_KEY,
     resave: false,
     saveUninitialized: false,

@@ -1,8 +1,9 @@
+import { getConnection, getRepository } from 'typeorm';
 import { Socket, Namespace } from 'socket.io';
 import { io } from '../app';
 
-import { Message } from '../models/message.model';
-import { IMessage } from '../interfaces/message.interface';
+import { Message } from '../models';
+import { IMessage } from '../interfaces';
 
 const msgSocket = io.of('/messages');
 
@@ -11,15 +12,15 @@ msgSocket.on('connection', (socket: Socket) => {
   socket.send('Bienvenido al servidor');
 
   socket.on('sendMessage', async (data: IMessage) => {
-    const newMsg = await Message.create({
-      userId: data.userId,
-      content: data.content,
+    if (!data.userId) return;
+    const message = new Message();
+    message.msg = data.msg;
+    message.userId = data.userId;
+    const createdMsg = await getConnection().manager.save(message);
+    const resMsg = await getRepository(Message).findOne({
+      id: createdMsg.id
     });
-    const fetchUser = await Message.findByPk(newMsg.id, {
-      include: 'user'
-    });
-    console.log(fetchUser);
-    msgSocket.emit('sendMessage', newMsg);
+    msgSocket.emit('sendMessage', resMsg);
   });
   socket.on('disconnect', () => {
     console.log('Disconnected');

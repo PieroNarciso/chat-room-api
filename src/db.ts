@@ -1,8 +1,15 @@
-import { Sequelize } from 'sequelize';
+import { createConnection } from 'typeorm';
 
 import config from './config';
+import { Message, User } from './models';
 
 
-const sequelize = new Sequelize(config.DB_URI);
 
-export default sequelize;
+export default createConnection({
+  type: 'postgres',
+  url: config.DB_URI,
+  entities: [Message, User],
+  synchronize: true
+});
+
+

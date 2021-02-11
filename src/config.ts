@@ -5,5 +5,6 @@ export default {
   SESSION_NAME: process.env.SESSION_NAME || 'suid',
   SALT_ROUNDS: 12,
   API_VERSION: '/api/v1',
-  CORS_ORIGIN_WHITELIST: process.env.CORS_ORIGIN_WHITELIST?.split(',') as string[]
+  CORS_ORIGIN_WHITELIST: process.env.CORS_ORIGIN_WHITELIST?.split(',') as string[],
+  REDIS_URL: process.env.REDIS_URL as string,
 };
