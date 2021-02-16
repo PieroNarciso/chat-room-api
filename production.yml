@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+    api:
+        image: chat-room-api
+        container_name: chat-room-api
+        build:
+            context: .
+            dockerfile: Dockerfile
+        restart: always
+        ports:
+            - "${API_PORT}:8081"
+        volumes:
+            - ./src:/usr/src/app/src
+        depends_on:
+            - db
+            - storage
+        environment:
+            DB_URI: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db-chat-room:5432/${POSTGRES_DB}"
+            NODE_ENV: production
+            SECRET_KEY: ${SECRET_KEY}
+            CORS_ORIGIN_WHITELIST: ${CORS_ORIGIN_WHITELIST}
+            REDIS_URL: redis://chat-cache
+
+    db:
+        container_name: db-chat-room
+        image: postgres
+        restart: always
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
+
+    storage:
+        image: redis
+        container_name: chat-cache
+        command: [ "redis-server" ]
+        ports:
+            - "6379:6379"
